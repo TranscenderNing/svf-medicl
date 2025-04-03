@@ -34,6 +34,11 @@ MODEL_PROMPT_DICT = {
         "generation_prompt": "<think>\n",
         "sys_msg": "",
         "chat_template": ""
+    },
+    "Qwen": {
+        "generation_prompt": "<|im_start|>assistant",
+        "sys_msg": "You are Qwen, created by Alibaba Cloud. You are a helpful assistant.",
+        "chat_template": ""
     }
 }
 
@@ -136,6 +141,17 @@ def get_dataset(
                 messages, tokenize=False, add_generation_prompt=True
             )
             answer = "\n</think>\n\n" + samples[output_field][ix]
+        elif model_name == "Qwen":
+            messages = [
+                {"role": "system", "content": "You are Qwen, created by Alibaba Cloud. You are a helpful assistant."},
+                {"role": "user", "content": samples[input_filed][ix]}
+            ]
+            prompt = tokenizer.apply_chat_template(
+                messages,
+                tokenize=False,
+                add_generation_prompt=True
+            )
+            answer = samples[output_field][ix]
         
         lines.append(prompt + answer)
 

@@ -247,33 +247,11 @@ def main(
     model = AutoModelForCausalLM.from_pretrained(
         model_id, torch_dtype=torch.bfloat16, device_map="auto"
     )
-    base_params = model.state_dict()
-    # Load decomposed parameters.
-    if not os.path.exists(decomposed_param_file):
-        print("Decomposed params not found. Decomposing...")
-        decomposed_params = {}
-        for k, v in base_params.items():
-            if "layers.0.mlp.gate_proj" in k:
-                print(k)
-                U, S, V = torch.svd(v.to(torch.float32))
-                decomposed_params[f"{k}.U"] = U
-                decomposed_params[f"{k}.S"] = S
-                decomposed_params[f"{k}.V"] = V
-        torch.save(decomposed_params, decomposed_param_file)
-    else:
-        print("Decomposed params found. Loading...")
-        decomposed_params = torch.load(decomposed_param_file)
-    for k, v in decomposed_params.items():
-        decomposed_params[k] = v.to(torch.bfloat16).to(device)
-
-
     # inference and test
     model.eval()
-    compute_metric(
+    compute_metric_without_finetune(
         model,
         tokenizer,
-        base_params,
-        decomposed_params,
         device=device,
         test_dir=test_dir,
         datasets=datasets,
@@ -283,8 +261,6 @@ def main(
         output_file=output_file,
         max_new_tokens=max_new_tokens,
     )
-    
-
 
 
 if __name__ == "__main__":
